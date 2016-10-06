@@ -13,7 +13,7 @@
       .module('gridTest', [ 'ngGrid' ])
       
       // Live data source (add more as needed)
-      .constant('DataSource', 'data_products.json')
+      .constant('DataSource', 'https://craig-willis.github.io/data_products.json')
       
       // The JavaScript controlling this view
       .controller('GridController', [ '$scope', '$http', 'Grid', 'DataSource', function($scope, $http, Grid, DataSource) {
