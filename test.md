@@ -1,0 +1,113 @@
+<!doctype html>
+<html ng-app="gridTest">
+  <head>
+    <title>Data Products</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-1.11.3.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.5/angular.js"></script>
+    <script src="js/angular-grid.js"></script>
+    <script>
+      angular
+      .module('gridTest', [ 'ngGrid' ])
+      
+      // Live data source (add more as needed)
+      .constant('DataSource', 'data_products.json')
+      
+      // The JavaScript controlling this view
+      .controller('GridController', [ '$scope', '$http', 'Grid', 'DataSource', function($scope, $http, Grid, DataSource) {
+        $http.get(DataSource).then(function(data) {
+          console.log('Data received: ', data);
+		  angular.forEach(data.data, function(item) {
+			  $scope.getSensorData(item)
+		  });
+          $scope.data = data.data;
+        }, function(response) {
+          console.log('Error: ', response);
+        });
+        
+		$scope.getSensorData = function(item) {
+			$http.get(item.sensorJsonUrl).then(function(resp) {
+				item.sensor = resp.data
+			});
+		};
+        $scope.grid = new Grid(30, function() { return $scope.data });
+        
+/*
+[
+  {
+    "id": "swir",
+    "name": "Short-wave hyperspectral data",
+    "level": "1",
+    "status": "Available",
+    "sensorUrl": "https://terraref.ncsa.illinois.edu/clowder-dev/datasets/57ea88dee4b00b25cabf8e9b"
+  }
+]
+*/
+        // The columns (as field names) to display on the table
+        $scope.gridCols = [ 'id', 'name', 'description', 'level', 'status', 'sensor' ];
+        
+        // TODO: These need to be done for every grid. Need to research the
+        // angular way to $scope.$watch from inside of the service
+        $scope.$watch('grid.query', function() { $scope.grid.jager.pageSizeChanged(); });
+        $scope.$watch('grid.pager.pageSize', function() { $scope.grid.pager.pageSizeChanged(); });
+        $scope.$watch('grid.query', function() { $scope.grid.selector.selection = []; });
+      }])
+      
+    </script>
+    <style>
+      table {
+        min-height:50px;
+      }
+    </style>
+  </head>
+  <body>
+    <div ng-view ng-controller="GridController" class="container">
+        <div class="row">
+        <div class="col-md-12">
+          <h1>Data Products</h1>
+          <p>TERRA-REF data product catalog. Below is a summary of high-level datasets available from TERRA-REF.</p>
+        </div>
+      </div>
+        <div class="row">
+        <div class="col-md-12">
+          <form>
+            <!-- Search Filter and Pager -->
+            <div class="input-group input-group">
+              <!-- Search Filter and parameters -->
+              <span class="input-group-addon"><i class="fa fa-search"></i></span>
+              <input class="form-control" type="text" ng-model="grid.query" placeholder="Filter by name..." aria-label="Filter by name..."/>
+
+            </div><!-- /input-group -->
+          </form>
+          <h4 ng-if="grid.data(grid.query).length === 0">No items matched your query.</h4>
+          <table class="table table-striped table-condensed table-hover">
+            <thead>
+              <tr>
+				<th style="width:5%">ID</th>
+				<th style="width:20%">Name</th>
+				<th style="width:40%">Description</th>
+				<th style="width:5%">Level</th>
+				<th style="width:5%">Status</th>
+				<th style="width:10%">Sensor</th>
+                </th>
+              <tr>
+             </thead>
+             <tbody>
+              <tr ng-click="grid.selector.select.toggle(item.id)" ng-repeat="item in grid.data(grid.query) | orderBy:grid.sort.orderByFieldName:grid.sort.reverse | limitTo:grid.pager.pageSize:(grid.pager.pageNum * grid.pager.pageSize)">
+				<td>{{ item['id'] }}</td>
+				<td><a href="{{ item['collectionUrl'] }}">{{ item['name'] }}</a></td>
+				<td>{{ item['description'] }}</td>
+				<td>{{ item['level'] }}</td>
+				<td>{{ item['status'] }}</td>
+				<td><a href="{{ item['sensorUrl'] }}">{{ item['sensor'].name }}</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div><!-- /.col-md-8 -->
+      </div>
+      
+    </div>
+  </body>
+</html>
