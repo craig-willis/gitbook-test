@@ -2,7 +2,6 @@
 Test of gitbook Javascript and iFrame rendering
 
 [HTML Test](test.html)
-[MD Test](test.md)
 
 
 ## iframe
